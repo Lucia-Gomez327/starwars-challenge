@@ -11,7 +11,7 @@ release.properties
 *.iml
 *.iws
 *.ipr
-out/
+.idea/out/
 
 # Eclipse
 .classpath
