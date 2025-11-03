@@ -146,10 +146,60 @@ public class SwapiClientImpl implements SwapiClient {
         }
     }
     
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> List<T> fetchByName(String endpoint, String name, Class<T> type) {
+        String url = baseUrl + "/" + endpoint + "?name=" + name;
+        
+        try {
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            
+            if (response == null) {
+                log.error("Null response from SWAPI for endpoint: {} with name: {}", endpoint, name);
+                return new ArrayList<>();
+            }
+            
+            List<T> results = new ArrayList<>();
+            
+            // Cuando se usa ?name=, SWAPI devuelve "result" (array) en lugar de "results"
+            if (response.containsKey("result")) {
+                List<Map<String, Object>> resultList = (List<Map<String, Object>>) response.get("result");
+                for (Map<String, Object> resultMap : resultList) {
+                    // SWAPI devuelve los datos dentro de "properties", similar a fetchById
+                    if (resultMap != null && resultMap.containsKey("properties")) {
+                        Map<String, Object> properties = (Map<String, Object>) resultMap.get("properties");
+                        // Agregar el uid del result
+                        if (resultMap.containsKey("uid")) {
+                            properties.put("uid", resultMap.get("uid"));
+                        }
+                        if (resultMap.containsKey("_id")) {
+                            properties.put("_id", resultMap.get("_id"));
+                        }
+                        T item = convertMapToObject(properties, type);
+                        if (item != null) {
+                            results.add(item);
+                        }
+                    } else {
+                        // Si no hay properties, intentar usar result directamente
+                        T item = convertMapToObject(resultMap, type);
+                        if (item != null) {
+                            results.add(item);
+                        }
+                    }
+                }
+            }
+            
+            log.debug("Fetched {} items from SWAPI endpoint: {} with name: {}", results.size(), endpoint, name);
+            return results;
+        } catch (Exception e) {
+            log.error("Error fetching from SWAPI endpoint: {} with name: {}", endpoint, name, e);
+            return new ArrayList<>();
+        }
+    }
+    
     @SuppressWarnings("unchecked")
     private <T> T convertMapToObject(Map<String, Object> map, Class<T> type) {
         try {
-            // Usar Jackson ObjectMapper para conversión
             String json = objectMapper.writeValueAsString(map);
             return objectMapper.readValue(json, type);
         } catch (Exception e) {

@@ -68,43 +68,37 @@ public class PeopleService implements PeopleUseCase {
 
         return Optional.empty();
     }
-    
+
     @Override
     public Page<People> findByNameContaining(String name, Pageable pageable) {
         log.debug("Searching people by name from SWAPI: {}", name);
-        
-        // SWAPI no tiene búsqueda por nombre directa, así que buscamos en todas las páginas
 
-        int swapiPage = 1;
-        int swapiLimit = 100; // Limite máximo para buscar
-        
-        SwapiPageResponse<SwapiPeopleDTO> swapiResponse = swapiClient.fetchPage("people", swapiPage, swapiLimit, SwapiPeopleDTO.class);
-        
-        if (swapiResponse == null || swapiResponse.getResults() == null) {
-            log.warn("No results from SWAPI for people search");
+        // SWAPI soporta búsqueda por nombre pero no con paginación, así que:
+        // buscar por nombro y aplica paginación manualmente
+        List<SwapiPeopleDTO> swapiResults = swapiClient.fetchByName("people", name, SwapiPeopleDTO.class);
+
+        if (swapiResults == null || swapiResults.isEmpty()) {
+            log.warn("No results from SWAPI for people search with name: {}", name);
             return new PageImpl<>(List.of(), pageable, 0);
         }
-        
-        // Filtrar por nombre
-        String searchName = name.toLowerCase();
-        List<People> filteredPeople = swapiResponse.getResults().stream()
+
+        // Convertir DTOs a modelos de dominio
+        List<People> allPeople = swapiResults.stream()
                 .map(swapiMapper::toPeople)
-                .filter(p -> p.getName() != null && p.getName().toLowerCase().contains(searchName))
                 .collect(Collectors.toList());
-        
+
         // paginación manual
         int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), filteredPeople.size());
-        
-        if (start > filteredPeople.size()) {
-            return new PageImpl<>(List.of(), pageable, filteredPeople.size());
-        }
-        
-        List<People> paginatedPeople = filteredPeople.subList(start, end);
-        
-        return new PageImpl<>(paginatedPeople, pageable, filteredPeople.size());
-    }
+        int end = Math.min((start + pageable.getPageSize()), allPeople.size());
 
+        if (start >= allPeople.size()) {
+            return new PageImpl<>(List.of(), pageable, allPeople.size());
+        }
+
+        List<People> paginatedPeople = allPeople.subList(start, end);
+
+        return new PageImpl<>(paginatedPeople, pageable, allPeople.size());
+    }
 
 }
 
