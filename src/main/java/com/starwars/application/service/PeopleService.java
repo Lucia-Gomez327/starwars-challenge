@@ -2,10 +2,10 @@ package com.starwars.application.service;
 
 import com.starwars.domain.exception.ResourceNotFoundException;
 import com.starwars.domain.model.People;
+import com.starwars.domain.model.SwapiPageResponse;
 import com.starwars.domain.port.in.PeopleUseCase;
 import com.starwars.domain.port.out.SwapiClient;
 import com.starwars.infrastructure.adapter.out.client.SwapiMapper;
-import com.starwars.infrastructure.adapter.out.client.dto.SwapiPageResponse;
 import com.starwars.infrastructure.adapter.out.client.dto.SwapiPeopleDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

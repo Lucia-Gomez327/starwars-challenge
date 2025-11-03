@@ -1,10 +1,10 @@
 package com.starwars.application.service;
 
 import com.starwars.domain.model.Starship;
+import com.starwars.domain.model.SwapiPageResponse;
 import com.starwars.domain.port.in.StarshipUseCase;
 import com.starwars.domain.port.out.SwapiClient;
 import com.starwars.infrastructure.adapter.out.client.SwapiMapper;
-import com.starwars.infrastructure.adapter.out.client.dto.SwapiPageResponse;
 import com.starwars.infrastructure.adapter.out.client.dto.SwapiStarshipDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

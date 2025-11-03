@@ -39,8 +39,8 @@ import org.springframework.data.domain.Pageable;
 // Imports de nuestras clases
 import com.starwars.domain.model.Starship;
 import com.starwars.domain.port.out.SwapiClient;
+import com.starwars.domain.model.SwapiPageResponse;
 import com.starwars.infrastructure.adapter.out.client.SwapiMapper;
-import com.starwars.infrastructure.adapter.out.client.dto.SwapiPageResponse;
 import com.starwars.infrastructure.adapter.out.client.dto.SwapiStarshipDTO;
 
 // Imports de Java estándar

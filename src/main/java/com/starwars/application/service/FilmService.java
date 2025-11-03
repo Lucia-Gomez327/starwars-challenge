@@ -1,11 +1,11 @@
 package com.starwars.application.service;
 
 import com.starwars.domain.model.Film;
+import com.starwars.domain.model.SwapiPageResponse;
 import com.starwars.domain.port.in.FilmUseCase;
 import com.starwars.domain.port.out.SwapiClient;
 import com.starwars.infrastructure.adapter.out.client.SwapiMapper;
 import com.starwars.infrastructure.adapter.out.client.dto.SwapiFilmDTO;
-import com.starwars.infrastructure.adapter.out.client.dto.SwapiPageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
