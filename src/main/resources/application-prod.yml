@@ -29,6 +29,14 @@ jwt:
 swapi:
   base-url: https://www.swapi.tech/api
 
+springdoc:
+  swagger-ui:
+    use-root-path: true
+    try-it-out-enabled: true
+  api-docs:
+    path: /api-docs
+  show-actuator: false
+
 logging:
   level:
     com.starwars: INFO
