@@ -31,30 +31,47 @@ public class SwapiClientImpl implements SwapiClient {
         String url = baseUrl + "/" + endpoint;
         
         try {
-            // Primero obtener la primera página para ver cuántas hay
+            // Intentar obtener sin paginación (caso como films -> "result" array)
+            Map<String, Object> flatResponse = restTemplate.getForObject(url, Map.class);
+            if (flatResponse != null && flatResponse.containsKey("result")) {
+                List<Map<String, Object>> resultList = (List<Map<String, Object>>) flatResponse.get("result");
+                for (Map<String, Object> resultMap : resultList) {
+                    // Algunas respuestas anidan en "properties" y traen uid/_id a nivel superior
+                    Map<String, Object> properties = null;
+                    if (resultMap != null && resultMap.containsKey("properties")) {
+                        properties = (Map<String, Object>) resultMap.get("properties");
+                        if (resultMap.containsKey("uid")) {
+                            properties.put("uid", resultMap.get("uid"));
+                        }
+                        if (resultMap.containsKey("_id")) {
+                            properties.put("_id", resultMap.get("_id"));
+                        }
+                    }
+                    T item = convertMapToObject(properties != null ? properties : resultMap, type);
+                    if (item != null) {
+                        allResults.add(item);
+                    }
+                }
+                log.info("Fetched {} items (flat result) from endpoint: {}", allResults.size(), endpoint);
+                return allResults;
+            }
+
+            // Si no hubo arreglo plano, intentar flujo paginado estándar ("results" + total_pages)
             Map<String, Object> firstPage = restTemplate.getForObject(url + "?page=1", Map.class);
-            
             if (firstPage != null && firstPage.containsKey("results")) {
                 List<Map<String, Object>> results = (List<Map<String, Object>>) firstPage.get("results");
-                
-                // Convertir cada resultado al tipo especificado
                 for (Map<String, Object> result : results) {
                     T item = convertMapToObject(result, type);
                     if (item != null) {
                         allResults.add(item);
                     }
                 }
-                
-                // Si hay más páginas
                 Integer totalPages = (Integer) firstPage.get("total_pages");
                 if (totalPages != null && totalPages > 1) {
-                    for (int page = 2; page <= totalPages && page <= 10; page++) { // Limitar a 10 páginas
-                        Map<String, Object> pageResult = restTemplate.getForObject(
-                            url + "?page=" + page, Map.class);
-                        
+                    for (int page = 2; page <= totalPages && page <= 10; page++) {
+                        Map<String, Object> pageResult = restTemplate.getForObject(url + "?page=" + page, Map.class);
                         if (pageResult != null && pageResult.containsKey("results")) {
-                            List<Map<String, Object>> pageResults = 
-                                (List<Map<String, Object>>) pageResult.get("results");
+                            List<Map<String, Object>> pageResults = (List<Map<String, Object>>) pageResult.get("results");
                             for (Map<String, Object> result : pageResults) {
                                 T item = convertMapToObject(result, type);
                                 if (item != null) {

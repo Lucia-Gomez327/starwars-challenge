@@ -28,24 +28,20 @@ public class FilmService implements FilmUseCase {
     @Override
     public Page<Film> findAll(Pageable pageable) {
         log.debug("Finding all films from SWAPI with pageable: {}", pageable);
-        
-        int swapiPage = pageable.getPageNumber() + 1;
-        int swapiLimit = pageable.getPageSize();
-        
-        SwapiPageResponse<SwapiFilmDTO> swapiResponse = swapiClient.fetchPage("films", swapiPage, swapiLimit, SwapiFilmDTO.class);
-        
-        if (swapiResponse == null || swapiResponse.getResults() == null) {
-            log.warn("No results from SWAPI for films");
-            return new PageImpl<>(List.of(), pageable, 0);
-        }
-        
-        List<Film> filmList = swapiResponse.getResults().stream()
+
+        // films en swapi.tech no está paginado; traemos todo y paginamos en memoria
+        List<SwapiFilmDTO> allDtos = swapiClient.fetchAll("films", SwapiFilmDTO.class);
+        List<Film> allFilms = allDtos.stream()
                 .map(swapiMapper::toFilm)
                 .collect(Collectors.toList());
-        
-        long totalElements = swapiResponse.getTotalRecords() != null ? swapiResponse.getTotalRecords() : 0;
-        
-        return new PageImpl<>(filmList, pageable, totalElements);
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), allFilms.size());
+        if (start >= allFilms.size()) {
+            return new PageImpl<>(List.of(), pageable, allFilms.size());
+        }
+        List<Film> pageContent = allFilms.subList(start, end);
+        return new PageImpl<>(pageContent, pageable, allFilms.size());
     }
     
     @Override

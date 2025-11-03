@@ -6,7 +6,6 @@ import com.starwars.application.mapper.FilmMapper;
 import com.starwars.domain.exception.ResourceNotFoundException;
 import com.starwars.domain.model.Film;
 import com.starwars.domain.port.in.FilmUseCase;
-import com.starwars.domain.model.SwapiPageResponse;
 import com.starwars.domain.port.out.SwapiClient;
 import com.starwars.infrastructure.adapter.out.client.SwapiMapper;
 import com.starwars.infrastructure.adapter.out.client.dto.SwapiFilmDTO;
@@ -35,84 +34,70 @@ public class FilmController {
     private final SwapiClient swapiClient;
     private final SwapiMapper swapiMapper;
     
-    @Operation(summary = "Get all films, with optional pagination and filters (id/name)")
+    @Operation(summary = "Get films paginated (page is 1-based)")
     @GetMapping
-    public ResponseEntity<?> getAllFilms(
-            @RequestParam(required = false) String id,
-            @RequestParam(required = false) String name,
+    public ResponseEntity<PageResponse<FilmResponse>> getAllFilms(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
-        
+        int requestedPage = (page == null || page < 1) ? 1 : page;
+        int requestedSize = (size == null || size < 1) ? 10 : size;
+        Pageable pageable = PageRequest.of(requestedPage - 1, requestedSize);
+        Page<Film> filmPage = filmUseCase.findAll(pageable);
+        return ResponseEntity.ok(PageResponse.<FilmResponse>builder()
+                .content(filmPage.getContent().stream()
+                        .map(filmMapper::toResponse)
+                        .toList())
+                .pageNumber(requestedPage)
+                .pageSize(filmPage.getSize())
+                .totalElements(filmPage.getTotalElements())
+                .totalPages(filmPage.getTotalPages())
+                .last(filmPage.isLast())
+                .first(filmPage.isFirst())
+                .build());
+    }
+
+    @Operation(summary = "Search films by id and/or title (page is 1-based)")
+    @GetMapping("/search")
+    public ResponseEntity<?> searchFilms(
+            @RequestParam(required = false) String id,
+            @RequestParam(required = false, name = "title") String title,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
         // Si hay ID, devolver solo ese registro
         if (id != null && !id.isEmpty()) {
             Film film = filmUseCase.findByUid(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Film", id));
             return ResponseEntity.ok(filmMapper.toResponse(film));
         }
-        
-        // Si hay nombre, buscar por título
-        if (name != null && !name.isEmpty()) {
-            Pageable pageable = (page != null && size != null) 
-                    ? PageRequest.of(page, size) 
-                    : null;
-            return ResponseEntity.ok(searchByName(name, pageable));
+
+        // Si hay título, buscar por título
+        if (title != null && !title.isEmpty()) {
+            Pageable pageable = null;
+            Integer requestedPage = null;
+            if (page != null && size != null) {
+                requestedPage = page;
+                int adjusted = Math.max(0, page - 1);
+                pageable = PageRequest.of(adjusted, size);
+            }
+            return ResponseEntity.ok(searchByTitle(title, pageable, requestedPage));
         }
-        
-        // Si hay paginación, devolver paginado
-        if (page != null && size != null) {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<Film> filmPage = filmUseCase.findAll(pageable);
-            return ResponseEntity.ok(PageResponse.<FilmResponse>builder()
-                    .content(filmPage.getContent().stream()
-                            .map(filmMapper::toResponse)
-                            .toList())
-                    .pageNumber(filmPage.getNumber())
-                    .pageSize(filmPage.getSize())
-                    .totalElements(filmPage.getTotalElements())
-                    .totalPages(filmPage.getTotalPages())
-                    .last(filmPage.isLast())
-                    .first(filmPage.isFirst())
-                    .build());
-        }
-        
-        // Sin parámetros, devolver todo
-        return ResponseEntity.ok(getAll());
+
+        // Si no hay filtros, devolver 400
+        return ResponseEntity.badRequest().body("Debe especificar 'id' o 'title'.");
     }
     
     private List<FilmResponse> getAll() {
-        List<FilmResponse> allFilms = new java.util.ArrayList<>();
-        int currentPage = 1;
-        int limit = 100;
-        
-        while (true) {
-            SwapiPageResponse<SwapiFilmDTO> swapiResponse = 
-                    swapiClient.fetchPage("films", currentPage, limit, SwapiFilmDTO.class);
-            
-            if (swapiResponse == null || swapiResponse.getResults() == null || swapiResponse.getResults().isEmpty()) {
-                break;
-            }
-            
-            List<FilmResponse> filmPage = swapiResponse.getResults().stream()
-                    .map(swapiMapper::toFilm)
-                    .map(filmMapper::toResponse)
-                    .collect(Collectors.toList());
-            
-            allFilms.addAll(filmPage);
-            
-            if (swapiResponse.getNext() == null || swapiResponse.getNext().isEmpty()) {
-                break;
-            }
-            
-            currentPage++;
-        }
-        
-        return allFilms;
+        List<SwapiFilmDTO> allDtos = swapiClient.fetchAll("films", SwapiFilmDTO.class);
+        return allDtos.stream()
+                .map(swapiMapper::toFilm)
+                .map(filmMapper::toResponse)
+                .collect(Collectors.toList());
     }
     
-    private PageResponse<FilmResponse> searchByName(String name, Pageable pageable) {
+    private PageResponse<FilmResponse> searchByTitle(String title, Pageable pageable, Integer requestedPage) {
         List<FilmResponse> allFilms = getAll();
-        
-        String searchName = name.toLowerCase();
+
+        String searchName = title.toLowerCase();
         List<FilmResponse> filteredFilms = allFilms.stream()
                 .filter(f -> f.getTitle() != null && f.getTitle().toLowerCase().contains(searchName))
                 .collect(Collectors.toList());
@@ -130,7 +115,7 @@ public class FilmController {
         if (start > filteredFilms.size()) {
             return PageResponse.<FilmResponse>builder()
                     .content(List.of())
-                    .pageNumber(pageable.getPageNumber())
+                    .pageNumber(requestedPage != null ? requestedPage : (pageable.getPageNumber() + 1))
                     .pageSize(pageable.getPageSize())
                     .totalElements(filteredFilms.size())
                     .build();
@@ -140,7 +125,7 @@ public class FilmController {
         
         return PageResponse.<FilmResponse>builder()
                 .content(paginatedFilms)
-                .pageNumber(pageable.getPageNumber())
+                .pageNumber(requestedPage != null ? requestedPage : (pageable.getPageNumber() + 1))
                 .pageSize(pageable.getPageSize())
                 .totalElements(filteredFilms.size())
                 .totalPages((int) Math.ceil((double) filteredFilms.size() / pageable.getPageSize()))
