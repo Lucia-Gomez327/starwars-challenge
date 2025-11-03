@@ -37,17 +37,14 @@ public class SwaggerConfig {
         
         List<Server> servers = new ArrayList<>();
         
-        // Agregar servidor según el perfil activo
-        String activeProfile = environment.getProperty("spring.profiles.active", "");
-        if (activeProfile.contains("prod")) {
-            servers.add(new Server()
-                    .url("https://starwars-challenge-production.up.railway.app")
-                    .description("Servidor de producción"));
-        } else {
-            servers.add(new Server()
-                    .url("http://localhost:8080")
-                    .description("Servidor local"));
-        }
+        // Agregar ambos servidores para permitir pruebas en cualquier entorno
+        servers.add(new Server()
+                .url("https://starwars-challenge-production.up.railway.app")
+                .description("Servidor de producción"));
+        
+        servers.add(new Server()
+                .url("http://localhost:8080")
+                .description("Servidor local"));
         
         openAPI.setServers(servers);
         
