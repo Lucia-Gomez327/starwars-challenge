@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @Tag(name = "Starships", description = "Starships management endpoints")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping("/api/starships")
+@RequestMapping("/api/v1/starships")
 @RequiredArgsConstructor
 public class StarshipController {
     

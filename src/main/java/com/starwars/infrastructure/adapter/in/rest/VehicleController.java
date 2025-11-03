@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @Tag(name = "Vehicles", description = "Vehicles management endpoints")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping("/api/vehicles")
+@RequestMapping("/api/v1/vehicles")
 @RequiredArgsConstructor
 public class VehicleController {
     

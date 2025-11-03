@@ -81,7 +81,7 @@ class StarshipControllerSecurityTest {
         // ========== ACT y ASSERT ==========
         // Hacemos petición GET sin header Authorization
         // Esperamos 401 Unauthorized
-        mockMvc.perform(get("/api/starships")
+        mockMvc.perform(get("/api/v1/starships")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());  // Verifica código 401
     }
@@ -98,7 +98,7 @@ class StarshipControllerSecurityTest {
         // ========== ACT y ASSERT ==========
         // Hacemos petición GET con token inválido
         // Esperamos 401 Unauthorized
-        mockMvc.perform(get("/api/starships")
+        mockMvc.perform(get("/api/v1/starships")
                         .header("Authorization", "Bearer token-falso-invalido-12345")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());  // Verifica código 401
@@ -117,7 +117,7 @@ class StarshipControllerSecurityTest {
         // ========== ACT y ASSERT ==========
         // Con @WithMockUser, estamos autenticados
         // Esperamos 200 OK (el endpoint funciona)
-        mockMvc.perform(get("/api/starships")
+        mockMvc.perform(get("/api/v1/starships")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());  // Verifica código 200
     }

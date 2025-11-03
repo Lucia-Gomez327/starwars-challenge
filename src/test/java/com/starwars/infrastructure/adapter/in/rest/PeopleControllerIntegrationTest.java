@@ -53,7 +53,7 @@ class PeopleControllerIntegrationTest {
                 "test@example.com"
         );
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerRequest)))
                 .andExpect(status().isCreated());
@@ -66,7 +66,7 @@ class PeopleControllerIntegrationTest {
                 }
                 """;
 
-        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginJson))
                 .andExpect(status().isOk())
@@ -89,7 +89,7 @@ class PeopleControllerIntegrationTest {
     @Test
     @DisplayName("Debería obtener lista paginada de personajes con token JWT válido - Flujo completo")
     void testGetAllPeople_WithPagination_ShouldReturnPaginatedList() throws Exception {
-        mockMvc.perform(get("/api/people")
+        mockMvc.perform(get("/api/v1/people")
                         .header("Authorization", "Bearer " + jwtToken)
                         .param("page", "0")
                         .param("size", "10")
@@ -109,7 +109,7 @@ class PeopleControllerIntegrationTest {
     @Test
     @DisplayName("Debería obtener un personaje por ID con token JWT válido - Flujo completo")
     void testGetPeopleById_ShouldReturnPeople() throws Exception {
-        mockMvc.perform(get("/api/people")
+        mockMvc.perform(get("/api/v1/people")
                         .header("Authorization", "Bearer " + jwtToken)
                         .param("id", "1")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -127,7 +127,7 @@ class PeopleControllerIntegrationTest {
     @Test
     @DisplayName("Debería rechazar petición sin token JWT - Flujo completo de seguridad")
     void testGetAllPeople_WithoutAuth_ShouldReturn401() throws Exception {
-        mockMvc.perform(get("/api/people")
+        mockMvc.perform(get("/api/v1/people")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
@@ -139,7 +139,7 @@ class PeopleControllerIntegrationTest {
     @Test
     @DisplayName("Debería rechazar petición con token JWT inválido - Flujo completo de seguridad")
     void testGetAllPeople_WithInvalidToken_ShouldReturn401() throws Exception {
-        mockMvc.perform(get("/api/people")
+        mockMvc.perform(get("/api/v1/people")
                         .header("Authorization", "Bearer token-falso-invalido-12345")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
@@ -153,7 +153,7 @@ class PeopleControllerIntegrationTest {
     @Test
     @DisplayName("Debería buscar personajes por nombre con token JWT válido - Flujo completo")
     void testSearchPeopleByName_ShouldReturnFilteredResults() throws Exception {
-        mockMvc.perform(get("/api/people")
+        mockMvc.perform(get("/api/v1/people")
                         .header("Authorization", "Bearer " + jwtToken)
                         .param("name", "Luke")
                         .param("page", "0")
@@ -173,7 +173,7 @@ class PeopleControllerIntegrationTest {
     @Test
     @DisplayName("Debería obtener todos los personajes sin parámetros con token JWT válido - Flujo completo")
     void testGetAllPeople_WithoutParams_ShouldReturnAll() throws Exception {
-        mockMvc.perform(get("/api/people")
+        mockMvc.perform(get("/api/v1/people")
                         .header("Authorization", "Bearer " + jwtToken)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())

@@ -134,7 +134,7 @@ class PeopleControllerSecurityTest {
         // ========== ACT y ASSERT ==========
         // 
         // mockMvc.perform() inicia una petición HTTP simulada
-        // get("/api/people") hace un GET a /api/people
+        // get("/api/v1/people") hace un GET a /api/v1/people
         // contentType(MediaType.APPLICATION_JSON) especifica que enviamos JSON
         // 
         // .andExpect() verifica la respuesta HTTP
@@ -145,7 +145,7 @@ class PeopleControllerSecurityTest {
         // "¿Qué pasa si NO ponemos token?"
         // 
         // Resultado esperado: 401 Unauthorized
-        mockMvc.perform(get("/api/people")
+        mockMvc.perform(get("/api/v1/people")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());  // Verifica código 401
     }
@@ -175,7 +175,7 @@ class PeopleControllerSecurityTest {
         // JwtTokenProvider.validateToken() debe devolver false.
         // 
         // Resultado esperado: 401 Unauthorized
-        mockMvc.perform(get("/api/people")
+        mockMvc.perform(get("/api/v1/people")
                         .header("Authorization", "Bearer token-falso-invalido-12345")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());  // Verifica código 401
@@ -198,7 +198,7 @@ class PeopleControllerSecurityTest {
         // Si no lo tiene, devuelve null y el token no se procesa
         // 
         // Resultado esperado: 401 Unauthorized
-        mockMvc.perform(get("/api/people")
+        mockMvc.perform(get("/api/v1/people")
                         .header("Authorization", "token-sin-bearer-12345")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());  // Verifica código 401
@@ -238,7 +238,7 @@ class PeopleControllerSecurityTest {
         // pero lo importante es que NO recibimos 401 (estamos autenticados).
         // 
         // Resultado esperado: 200 OK (o el código que devuelva el endpoint)
-        mockMvc.perform(get("/api/people")
+        mockMvc.perform(get("/api/v1/people")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());  // Verifica código 200
     }
@@ -254,7 +254,7 @@ class PeopleControllerSecurityTest {
         
         // ========== ACT y ASSERT ==========
         // Mismo test pero sin parámetros explícitos
-        mockMvc.perform(get("/api/people"))
+        mockMvc.perform(get("/api/v1/people"))
                 .andExpect(status().isUnauthorized());  // Verifica código 401
     }
 }

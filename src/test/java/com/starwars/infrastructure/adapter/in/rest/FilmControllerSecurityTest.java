@@ -38,7 +38,7 @@ class FilmControllerSecurityTest {
     @Test
     @DisplayName("Debería rechazar acceso sin token JWT - 401 Unauthorized")
     void testGetAllFilms_WithoutToken_ShouldReturn401() throws Exception {
-        mockMvc.perform(get("/api/films")
+        mockMvc.perform(get("/api/v1/films")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
@@ -49,7 +49,7 @@ class FilmControllerSecurityTest {
     @Test
     @DisplayName("Debería rechazar acceso con token inválido - 401 Unauthorized")
     void testGetAllFilms_WithInvalidToken_ShouldReturn401() throws Exception {
-        mockMvc.perform(get("/api/films")
+        mockMvc.perform(get("/api/v1/films")
                         .header("Authorization", "Bearer token-falso-invalido-12345")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
@@ -62,7 +62,7 @@ class FilmControllerSecurityTest {
     @DisplayName("Debería permitir acceso con autenticación válida - 200 OK")
     @WithMockUser
     void testGetAllFilms_WithValidAuthentication_ShouldReturn200() throws Exception {
-        mockMvc.perform(get("/api/films")
+        mockMvc.perform(get("/api/v1/films")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }

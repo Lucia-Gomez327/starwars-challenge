@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @Tag(name = "People", description = "People management endpoints")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping("/api/people")
+@RequestMapping("/api/v1/people")
 @RequiredArgsConstructor
 public class PeopleController {
     

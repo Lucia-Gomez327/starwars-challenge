@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @Tag(name = "Films", description = "Films management endpoints")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping("/api/films")
+@RequestMapping("/api/v1/films")
 @RequiredArgsConstructor
 public class FilmController {
     

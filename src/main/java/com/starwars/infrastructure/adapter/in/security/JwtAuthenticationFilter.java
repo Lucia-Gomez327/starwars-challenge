@@ -32,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         
         // Para rutas de autenticación o peticiones OPTIONS (preflight de CORS)
-        if (path.startsWith("/api/auth/") || "OPTIONS".equalsIgnoreCase(request.getMethod())) {
+        if (path.startsWith("/api/v1/auth/") || "OPTIONS".equalsIgnoreCase(request.getMethod())) {
             // Limpiar el SecurityContext para que permitAll() funcione correctamente
             SecurityContextHolder.clearContext();
             filterChain.doFilter(request, response);

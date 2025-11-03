@@ -80,7 +80,7 @@ Desde aquí puedes:
 
 #### Autenticación
 
-**POST** `/api/auth/register` - Registro de nuevo usuario
+**POST** `/api/v1/auth/register` - Registro de nuevo usuario
 
 ```json
 {
@@ -90,7 +90,7 @@ Desde aquí puedes:
 }
 ```
 
-**POST** `/api/auth/login` - Iniciar sesión
+**POST** `/api/v1/auth/login` - Iniciar sesión
 
 ```json
 {
@@ -117,7 +117,7 @@ Desde aquí puedes:
 
 El proceso de registro crea un nuevo usuario en el sistema:
 
-1. **Enviar petición POST** a `/api/auth/register` con:
+1. **Enviar petición POST** a `/api/v1/auth/register` con:
     - `username`: Nombre de usuario único
     - `password`: Contraseña del usuario
     - `email`: Email válido y único
@@ -143,7 +143,7 @@ El proceso de registro crea un nuevo usuario en el sistema:
 
 Si ya tienes una cuenta registrada:
 
-1. **Enviar petición POST** a `/api/auth/login` con:
+1. **Enviar petición POST** a `/api/v1/auth/login` con:
     - `username`: Tu nombre de usuario
     - `password`: Tu contraseña
 
@@ -174,14 +174,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 **Importante:**
 - El token tiene una duración predeterminada de 24 horas (configurable)
 - Si el token expira, deberás iniciar sesión nuevamente
-- El token se incluye en todas las peticiones a `/api/people`, `/api/films`, `/api/starships`, `/api/vehicles`
+- El token se incluye en todas las peticiones a `/api/v1/people`, `/api/v1/films`, `/api/v1/starships`, `/api/v1/vehicles`
 
 #### People (Personajes)
 
-**GET** `/api/people` - Obtener personajes con paginación:
+**GET** `/api/v1/people` - Obtener personajes con paginación:
 
 ```
-GET /api/people?page=0&size=10
+GET /api/v1/people?page=0&size=10
 Authorization: Bearer tu-token-jwt-aqui
 ```
 
@@ -211,69 +211,69 @@ Authorization: Bearer tu-token-jwt-aqui
 }
 ```
 
-**GET** `/api/people/search` - Buscar personajes por ID o nombre:
+**GET** `/api/v1/people/search` - Buscar personajes por ID o nombre:
 
 ```
-GET /api/people/search?id=1
-GET /api/people/search?name=Luke
+GET /api/v1/people/search?id=1
+GET /api/v1/people/search?name=Luke
 Authorization: Bearer tu-token-jwt-aqui
 ```
 
 #### Films (Películas)
 
-**GET** `/api/films` - Obtener películas con paginación
+**GET** `/api/v1/films` - Obtener películas con paginación
 
 ```
-GET /api/films?page=1&size=10
+GET /api/v1/films?page=1&size=10
 Authorization: Bearer tu-token-jwt-aqui
 ```
 
-**GET** `/api/films/search` - Buscar películas por ID o título:
+**GET** `/api/v1/films/search` - Buscar películas por ID o título:
 
 ```
-GET /api/films/search?id=1
-GET /api/films/search?title=A New Hope&page=1&size=10
+GET /api/v1/films/search?id=1
+GET /api/v1/films/search?title=A New Hope&page=1&size=10
 Authorization: Bearer tu-token-jwt-aqui
 ```
 
 #### Starships (Naves Espaciales)
 
-**GET** `/api/starships` - Obtener naves con paginación
+**GET** `/api/v1/starships` - Obtener naves con paginación
 
 ```
-GET /api/starships?page=1&size=10
+GET /api/v1/starships?page=1&size=10
 Authorization: Bearer tu-token-jwt-aqui
 ```
 
-**GET** `/api/starships/search` - Buscar naves por ID, nombre o modelo:
+**GET** `/api/v1/starships/search` - Buscar naves por ID, nombre o modelo:
 
 ```
-GET /api/starships/search?id=1
-GET /api/starships/search?name=Death Star
-GET /api/starships/search?model=Star Destroyer&page=1&size=10
+GET /api/v1/starships/search?id=1
+GET /api/v1/starships/search?name=Death Star
+GET /api/v1/starships/search?model=Star Destroyer&page=1&size=10
 Authorization: Bearer tu-token-jwt-aqui
 ```
 
 #### Vehicles (Vehículos)
 
-**GET** `/api/vehicles` - Obtener vehículos con paginación ):
+**GET** `/api/v1/vehicles` - Obtener vehículos con paginación ):
 
 ```
-GET /api/vehicles?page=1&size=10
+GET /api/v1/vehicles?page=1&size=10
 Authorization: Bearer tu-token-jwt-aqui
 ```
 
-**GET** `/api/vehicles/search` - Buscar vehículos por ID, nombre o modelo:
+**GET** `/api/v1/vehicles/search` - Buscar vehículos por ID, nombre o modelo:
 
 ```
-GET /api/vehicles/search?id=1
-GET /api/vehicles/search?name=Sand Crawler
-GET /api/vehicles/search?model=AT-AT&page=1&size=10
+GET /api/v1/vehicles/search?id=1
+GET /api/v1/vehicles/search?name=Sand Crawler
+GET /api/v1/vehicles/search?model=AT-AT&page=1&size=10
 Authorization: Bearer tu-token-jwt-aqui
 ```
 
 **Nota importante:**
-- Todos los endpoints (excepto `/api/auth/**`) requieren autenticación JWT
+- Todos los endpoints (excepto `/api/v1/auth/**`) requieren autenticación JWT
 - Todos los datos se consultan en tiempo real desde SWAPI
 - La paginación en Films, Starships y Vehicles es 1-based (la primera página es 1, no 0)
 
@@ -377,7 +377,7 @@ swapi:
 
 ## 🔐 Seguridad
 
-- **Autenticación JWT:** Todos los endpoints (excepto `/api/auth/**`) requieren token JWT
+- **Autenticación JWT:** Todos los endpoints (excepto `/api/v1/auth/**`) requieren token JWT
 - **Spring Security:** Configurado para proteger las rutas
 - **CORS:** Configurado para permitir peticiones desde cualquier origen
 
@@ -388,7 +388,7 @@ swapi:
 #### 1. Registrar Usuario
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/register \
+curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",
@@ -410,7 +410,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 #### 2. Iniciar Sesión
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",
@@ -435,28 +435,28 @@ Guarda el token de la respuesta anterior en una variable:
 ```bash
 TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
-curl -X GET "http://localhost:8080/api/people?page=0&size=10" \
+curl -X GET "http://localhost:8080/api/v1/people?page=0&size=10" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
 #### 4. Buscar Personaje por Nombre
 
 ```bash
-curl -X GET "http://localhost:8080/api/people/search?name=Luke" \
+curl -X GET "http://localhost:8080/api/v1/people/search?name=Luke" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
 #### 5. Obtener Películas
 
 ```bash
-curl -X GET "http://localhost:8080/api/films?page=1&size=5" \
+curl -X GET "http://localhost:8080/api/v1/films?page=1&size=5" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
 #### 6. Buscar Nave Espacial
 
 ```bash
-curl -X GET "http://localhost:8080/api/starships/search?name=Death Star" \
+curl -X GET "http://localhost:8080/api/v1/starships/search?name=Death Star" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -464,7 +464,7 @@ curl -X GET "http://localhost:8080/api/starships/search?name=Death Star" \
 
 1. **Importar colección:** Puedes usar Swagger UI para generar una colección de Postman
 2. **Configurar Bearer Token:** En la pestaña Authorization, selecciona "Bearer Token" y pega tu token
-3. **Probar endpoints:** Todas las peticiones a `/api/*` (excepto `/api/auth/**`) requerirán el token
+3. **Probar endpoints:** Todas las peticiones a `/api/*` (excepto `/api/v1/auth/**`) requerirán el token
 
 ### Problemas Comunes
 

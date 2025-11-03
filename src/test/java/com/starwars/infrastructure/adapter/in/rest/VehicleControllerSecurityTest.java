@@ -67,7 +67,7 @@ class VehicleControllerSecurityTest {
     @Test
     @DisplayName("Debería rechazar acceso sin token JWT - 401 Unauthorized")
     void testGetAllVehicles_WithoutToken_ShouldReturn401() throws Exception {
-        mockMvc.perform(get("/api/vehicles")
+        mockMvc.perform(get("/api/v1/vehicles")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
@@ -78,7 +78,7 @@ class VehicleControllerSecurityTest {
     @Test
     @DisplayName("Debería rechazar acceso con token inválido - 401 Unauthorized")
     void testGetAllVehicles_WithInvalidToken_ShouldReturn401() throws Exception {
-        mockMvc.perform(get("/api/vehicles")
+        mockMvc.perform(get("/api/v1/vehicles")
                         .header("Authorization", "Bearer token-falso-invalido-12345")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
@@ -91,7 +91,7 @@ class VehicleControllerSecurityTest {
     @DisplayName("Debería permitir acceso con autenticación válida - 200 OK")
     @WithMockUser
     void testGetAllVehicles_WithValidAuthentication_ShouldReturn200() throws Exception {
-        mockMvc.perform(get("/api/vehicles")
+        mockMvc.perform(get("/api/v1/vehicles")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
