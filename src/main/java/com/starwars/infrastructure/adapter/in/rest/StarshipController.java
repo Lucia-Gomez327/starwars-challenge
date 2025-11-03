@@ -1,6 +1,7 @@
 package com.starwars.infrastructure.adapter.in.rest;
 
 import com.starwars.application.dto.response.PageResponse;
+import com.starwars.application.dto.response.StandardResponse;
 import com.starwars.application.dto.response.StarshipResponse;
 import com.starwars.application.mapper.StarshipMapper;
 import com.starwars.domain.exception.ResourceNotFoundException;
@@ -36,14 +37,15 @@ public class StarshipController {
     
     @Operation(summary = "Get starships paginated (page is 1-based, starships supports pagination)")
     @GetMapping
-    public ResponseEntity<PageResponse<StarshipResponse>> getAllStarships(
+    public ResponseEntity<StandardResponse<PageResponse<StarshipResponse>>> getAllStarships(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
         int requestedPage = (page == null || page < 1) ? 1 : page;
         int requestedSize = (size == null || size < 1) ? 10 : size;
         Pageable pageable = PageRequest.of(requestedPage - 1, requestedSize);
         Page<Starship> starshipPage = starshipUseCase.findAll(pageable);
-        return ResponseEntity.ok(PageResponse.<StarshipResponse>builder()
+        
+        PageResponse<StarshipResponse> pageData = PageResponse.<StarshipResponse>builder()
                 .content(starshipPage.getContent().stream()
                         .map(starshipMapper::toResponse)
                         .toList())
@@ -53,12 +55,15 @@ public class StarshipController {
                 .totalPages(starshipPage.getTotalPages())
                 .last(starshipPage.isLast())
                 .first(starshipPage.isFirst())
-                .build());
+                .build();
+        
+        StandardResponse<PageResponse<StarshipResponse>> response = StandardResponse.exito(pageData);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Search starships by id and/or name or model (not both name and model at the same time, page is 1-based)")
     @GetMapping("/search")
-    public ResponseEntity<?> searchStarships(
+    public ResponseEntity<StandardResponse<?>> searchStarships(
             @RequestParam(required = false) String id,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String model,
@@ -68,7 +73,8 @@ public class StarshipController {
         if (id != null && !id.isEmpty()) {
             Starship starship = starshipUseCase.findByUid(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Starship", id));
-            return ResponseEntity.ok(starshipMapper.toResponse(starship));
+            StandardResponse<StarshipResponse> response = StandardResponse.exito(starshipMapper.toResponse(starship));
+            return ResponseEntity.ok(response);
         }
 
         // Validar que no se use name y model a la vez
@@ -76,7 +82,8 @@ public class StarshipController {
         boolean hasModel = model != null && !model.isEmpty();
         
         if (hasName && hasModel) {
-            return ResponseEntity.badRequest().body("No se puede buscar por 'name' y 'model' al mismo tiempo. Use solo uno.");
+            StandardResponse<?> response = StandardResponse.error("No se puede buscar por 'name' y 'model' al mismo tiempo. Use solo uno.");
+            return ResponseEntity.badRequest().body(response);
         }
 
         // Si hay nombre, buscar por nombre
@@ -88,7 +95,9 @@ public class StarshipController {
                 int adjusted = Math.max(0, page - 1);
                 pageable = PageRequest.of(adjusted, size);
             }
-            return ResponseEntity.ok(searchByName(name, pageable, requestedPage));
+            PageResponse<StarshipResponse> searchResult = searchByName(name, pageable, requestedPage);
+            StandardResponse<PageResponse<StarshipResponse>> response = StandardResponse.exito(searchResult);
+            return ResponseEntity.ok(response);
         }
 
         // Si hay model, buscar por model
@@ -100,11 +109,14 @@ public class StarshipController {
                 int adjusted = Math.max(0, page - 1);
                 pageable = PageRequest.of(adjusted, size);
             }
-            return ResponseEntity.ok(searchByModel(model, pageable, requestedPage));
+            PageResponse<StarshipResponse> searchResult = searchByModel(model, pageable, requestedPage);
+            StandardResponse<PageResponse<StarshipResponse>> response = StandardResponse.exito(searchResult);
+            return ResponseEntity.ok(response);
         }
 
         // Si no hay filtros, devolver 400
-        return ResponseEntity.badRequest().body("Debe especificar 'id', 'name' o 'model'.");
+        StandardResponse<?> response = StandardResponse.error("Debe especificar 'id', 'name' o 'model'.");
+        return ResponseEntity.badRequest().body(response);
     }
     
     private PageResponse<StarshipResponse> searchByName(String name, Pageable pageable, Integer requestedPage) {

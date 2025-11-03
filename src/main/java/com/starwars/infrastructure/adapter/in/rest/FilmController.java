@@ -2,6 +2,7 @@ package com.starwars.infrastructure.adapter.in.rest;
 
 import com.starwars.application.dto.response.FilmResponse;
 import com.starwars.application.dto.response.PageResponse;
+import com.starwars.application.dto.response.StandardResponse;
 import com.starwars.application.mapper.FilmMapper;
 import com.starwars.domain.exception.ResourceNotFoundException;
 import com.starwars.domain.model.Film;
@@ -36,14 +37,15 @@ public class FilmController {
     
     @Operation(summary = "Get films paginated (page is 1-based)")
     @GetMapping
-    public ResponseEntity<PageResponse<FilmResponse>> getAllFilms(
+    public ResponseEntity<StandardResponse<PageResponse<FilmResponse>>> getAllFilms(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
         int requestedPage = (page == null || page < 1) ? 1 : page;
         int requestedSize = (size == null || size < 1) ? 10 : size;
         Pageable pageable = PageRequest.of(requestedPage - 1, requestedSize);
         Page<Film> filmPage = filmUseCase.findAll(pageable);
-        return ResponseEntity.ok(PageResponse.<FilmResponse>builder()
+        
+        PageResponse<FilmResponse> pageData = PageResponse.<FilmResponse>builder()
                 .content(filmPage.getContent().stream()
                         .map(filmMapper::toResponse)
                         .toList())
@@ -53,12 +55,15 @@ public class FilmController {
                 .totalPages(filmPage.getTotalPages())
                 .last(filmPage.isLast())
                 .first(filmPage.isFirst())
-                .build());
+                .build();
+        
+        StandardResponse<PageResponse<FilmResponse>> response = StandardResponse.exito(pageData);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Search films by id and/or title (page is 1-based)")
     @GetMapping("/search")
-    public ResponseEntity<?> searchFilms(
+    public ResponseEntity<StandardResponse<?>> searchFilms(
             @RequestParam(required = false) String id,
             @RequestParam(required = false, name = "title") String title,
             @RequestParam(required = false) Integer page,
@@ -67,7 +72,8 @@ public class FilmController {
         if (id != null && !id.isEmpty()) {
             Film film = filmUseCase.findByUid(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Film", id));
-            return ResponseEntity.ok(filmMapper.toResponse(film));
+            StandardResponse<FilmResponse> response = StandardResponse.exito(filmMapper.toResponse(film));
+            return ResponseEntity.ok(response);
         }
 
         // Si hay título, buscar por título
@@ -79,11 +85,14 @@ public class FilmController {
                 int adjusted = Math.max(0, page - 1);
                 pageable = PageRequest.of(adjusted, size);
             }
-            return ResponseEntity.ok(searchByTitle(title, pageable, requestedPage));
+            PageResponse<FilmResponse> searchResult = searchByTitle(title, pageable, requestedPage);
+            StandardResponse<PageResponse<FilmResponse>> response = StandardResponse.exito(searchResult);
+            return ResponseEntity.ok(response);
         }
 
         // Si no hay filtros, devolver 400
-        return ResponseEntity.badRequest().body("Debe especificar 'id' o 'title'.");
+        StandardResponse<?> response = StandardResponse.error("Debe especificar 'id' o 'title'.");
+        return ResponseEntity.badRequest().body(response);
     }
     
     private List<FilmResponse> getAll() {

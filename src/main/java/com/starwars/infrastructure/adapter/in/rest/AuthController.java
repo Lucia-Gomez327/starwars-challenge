@@ -3,6 +3,7 @@ package com.starwars.infrastructure.adapter.in.rest;
 import com.starwars.application.dto.request.LoginRequest;
 import com.starwars.application.dto.request.RegisterRequest;
 import com.starwars.application.dto.response.AuthResponse;
+import com.starwars.application.dto.response.StandardResponse;
 import com.starwars.domain.model.User;
 import com.starwars.domain.port.in.AuthUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,7 +25,7 @@ public class AuthController {
     
     @Operation(summary = "Register a new user")
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<StandardResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         User user = authUseCase.register(
                 request.getUsername(),
                 request.getPassword(),
@@ -33,27 +34,29 @@ public class AuthController {
         
         String token = authUseCase.login(request.getUsername(), request.getPassword());
         
-        AuthResponse response = AuthResponse.builder()
+        AuthResponse authData = AuthResponse.builder()
                 .token(token)
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .build();
         
+        StandardResponse<AuthResponse> response = StandardResponse.exito(authData);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
     
     @Operation(summary = "Login with username and password")
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<StandardResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         String token = authUseCase.login(request.getUsername(), request.getPassword());
         User user = authUseCase.findByUsername(request.getUsername());
         
-        AuthResponse response = AuthResponse.builder()
+        AuthResponse authData = AuthResponse.builder()
                 .token(token)
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .build();
         
+        StandardResponse<AuthResponse> response = StandardResponse.exito(authData);
         return ResponseEntity.ok(response);
     }
 }

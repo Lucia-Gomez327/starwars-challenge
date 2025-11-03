@@ -2,6 +2,7 @@ package com.starwars.infrastructure.adapter.in.rest;
 
 import com.starwars.application.dto.response.PageResponse;
 import com.starwars.application.dto.response.PeopleResponse;
+import com.starwars.application.dto.response.StandardResponse;
 import com.starwars.application.mapper.PeopleMapper;
 import com.starwars.domain.exception.ResourceNotFoundException;
 import com.starwars.domain.model.People;
@@ -36,14 +37,14 @@ public class PeopleController {
     
     @Operation(summary = "Get all people with pagination")
     @GetMapping
-    public ResponseEntity<PageResponse<PeopleResponse>> getAllPeople(
+    public ResponseEntity<StandardResponse<PageResponse<PeopleResponse>>> getAllPeople(
             @RequestParam(required = false, defaultValue = "0") Integer page,
             @RequestParam(required = false, defaultValue = "10") Integer size) {
         
         Pageable pageable = PageRequest.of(page, size);
         Page<People> peoplePage = peopleUseCase.findAll(pageable);
         
-        return ResponseEntity.ok(PageResponse.<PeopleResponse>builder()
+        PageResponse<PeopleResponse> pageData = PageResponse.<PeopleResponse>builder()
                 .content(peoplePage.getContent().stream()
                         .map(peopleMapper::toResponse)
                         .toList())
@@ -53,12 +54,15 @@ public class PeopleController {
                 .totalPages(peoplePage.getTotalPages())
                 .last(peoplePage.isLast())
                 .first(peoplePage.isFirst())
-                .build());
+                .build();
+        
+        StandardResponse<PageResponse<PeopleResponse>> response = StandardResponse.exito(pageData);
+        return ResponseEntity.ok(response);
     }
     
     @Operation(summary = "Search people by id and/or name")
     @GetMapping("/search")
-    public ResponseEntity<?> searchPeople(
+    public ResponseEntity<StandardResponse<?>> searchPeople(
             @RequestParam(required = false) String id,
             @RequestParam(required = false) String name) {
         
@@ -66,7 +70,8 @@ public class PeopleController {
         if (id != null && !id.isEmpty()) {
             People people = peopleUseCase.findByUid(id)
                     .orElseThrow(() -> new ResourceNotFoundException("People", id));
-            return ResponseEntity.ok(peopleMapper.toResponse(people));
+            StandardResponse<PeopleResponse> response = StandardResponse.exito(peopleMapper.toResponse(people));
+            return ResponseEntity.ok(response);
         }
         
         // Si hay nombre, buscar por nombre
@@ -78,11 +83,13 @@ public class PeopleController {
                     .map(peopleMapper::toResponse)
                     .collect(Collectors.toList());
             
-            return ResponseEntity.ok(filteredPeople);
+            StandardResponse<List<PeopleResponse>> response = StandardResponse.exito(filteredPeople);
+            return ResponseEntity.ok(response);
         }
         
         // Si no hay parámetros, devolver error
-        return ResponseEntity.badRequest().body("Debe proporcionar al menos un parámetro de búsqueda (id o nombre)");
+        StandardResponse<?> response = StandardResponse.error("Debe proporcionar al menos un parámetro de búsqueda (id o nombre)");
+        return ResponseEntity.badRequest().body(response);
     }
     
 }

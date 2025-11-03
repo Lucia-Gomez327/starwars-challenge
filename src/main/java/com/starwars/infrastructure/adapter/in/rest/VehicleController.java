@@ -1,6 +1,7 @@
 package com.starwars.infrastructure.adapter.in.rest;
 
 import com.starwars.application.dto.response.PageResponse;
+import com.starwars.application.dto.response.StandardResponse;
 import com.starwars.application.dto.response.VehicleResponse;
 import com.starwars.application.mapper.VehicleMapper;
 import com.starwars.domain.exception.ResourceNotFoundException;
@@ -37,14 +38,15 @@ public class VehicleController {
     
     @Operation(summary = "Get vehicles paginated (page is 1-based)")
     @GetMapping
-    public ResponseEntity<PageResponse<VehicleResponse>> getAllVehicles(
+    public ResponseEntity<StandardResponse<PageResponse<VehicleResponse>>> getAllVehicles(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
         int requestedPage = (page == null || page < 1) ? 1 : page;
         int requestedSize = (size == null || size < 1) ? 10 : size;
         Pageable pageable = PageRequest.of(requestedPage - 1, requestedSize);
         Page<Vehicle> vehiclePage = vehicleUseCase.findAll(pageable);
-        return ResponseEntity.ok(PageResponse.<VehicleResponse>builder()
+        
+        PageResponse<VehicleResponse> pageData = PageResponse.<VehicleResponse>builder()
                 .content(vehiclePage.getContent().stream()
                         .map(vehicleMapper::toResponse)
                         .toList())
@@ -54,12 +56,15 @@ public class VehicleController {
                 .totalPages(vehiclePage.getTotalPages())
                 .last(vehiclePage.isLast())
                 .first(vehiclePage.isFirst())
-                .build());
+                .build();
+        
+        StandardResponse<PageResponse<VehicleResponse>> response = StandardResponse.exito(pageData);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Search vehicles by id and/or name or model (not both name and model at the same time, page is 1-based)")
     @GetMapping("/search")
-    public ResponseEntity<?> searchVehicles(
+    public ResponseEntity<StandardResponse<?>> searchVehicles(
             @RequestParam(required = false) String id,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String model,
@@ -69,14 +74,16 @@ public class VehicleController {
         if (id != null && !id.isEmpty()) {
             Vehicle vehicle = vehicleUseCase.findByUid(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
-            return ResponseEntity.ok(vehicleMapper.toResponse(vehicle));
+            StandardResponse<VehicleResponse> response = StandardResponse.exito(vehicleMapper.toResponse(vehicle));
+            return ResponseEntity.ok(response);
         }
 
         boolean hasName = name != null && !name.isEmpty();
         boolean hasModel = model != null && !model.isEmpty();
 
         if (hasName && hasModel) {
-            return ResponseEntity.badRequest().body("No se puede buscar por 'name' y 'model' al mismo tiempo. Use solo uno.");
+            StandardResponse<?> response = StandardResponse.error("No se puede buscar por 'name' y 'model' al mismo tiempo. Use solo uno.");
+            return ResponseEntity.badRequest().body(response);
         }
 
         if (hasName) {
@@ -87,7 +94,9 @@ public class VehicleController {
                 int adjusted = Math.max(0, page - 1);
                 pageable = PageRequest.of(adjusted, size);
             }
-            return ResponseEntity.ok(searchByName(name, pageable, requestedPage));
+            PageResponse<VehicleResponse> searchResult = searchByName(name, pageable, requestedPage);
+            StandardResponse<PageResponse<VehicleResponse>> response = StandardResponse.exito(searchResult);
+            return ResponseEntity.ok(response);
         }
 
         if (hasModel) {
@@ -98,10 +107,13 @@ public class VehicleController {
                 int adjusted = Math.max(0, page - 1);
                 pageable = PageRequest.of(adjusted, size);
             }
-            return ResponseEntity.ok(searchByModel(model, pageable, requestedPage));
+            PageResponse<VehicleResponse> searchResult = searchByModel(model, pageable, requestedPage);
+            StandardResponse<PageResponse<VehicleResponse>> response = StandardResponse.exito(searchResult);
+            return ResponseEntity.ok(response);
         }
 
-        return ResponseEntity.badRequest().body("Debe especificar 'id', 'name' o 'model'.");
+        StandardResponse<?> response = StandardResponse.error("Debe especificar 'id', 'name' o 'model'.");
+        return ResponseEntity.badRequest().body(response);
     }
     
     private PageResponse<VehicleResponse> searchByName(String name, Pageable pageable, Integer requestedPage) {
