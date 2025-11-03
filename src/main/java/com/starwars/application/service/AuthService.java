@@ -25,21 +25,20 @@ public class AuthService implements AuthUseCase {
     @Override
     @Transactional
     public User register(String username, String password, String email) {
-        log.debug("Registering new user: {}", username);
+        log.debug("Registering new user: ", username);
         
         if (userRepository.existsByUsername(username)) {
-            throw new AuthenticationException("Username already exists");
+            throw new AuthenticationException("El usario ya existe");
         }
         
         if (userRepository.existsByEmail(email)) {
-            throw new AuthenticationException("Email already exists");
+            throw new AuthenticationException("El email ya está en uso");
         }
         
         User user = User.builder()
                 .username(username)
                 .password(passwordEncoder.encode(password))
                 .email(email)
-                .roles(Set.of("ROLE_USER"))
                 .createdAt(LocalDateTime.now())
                 .enabled(true)
                 .build();
@@ -50,20 +49,20 @@ public class AuthService implements AuthUseCase {
     @Override
     @Transactional(readOnly = true)
     public String login(String username, String password) {
-        log.debug("User login attempt: {}", username);
+        log.debug("User login attempt: ", username);
         
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new AuthenticationException("Invalid credentials"));
+                .orElseThrow(() -> new AuthenticationException("Credenciales inválidas"));
         
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new AuthenticationException("Invalid credentials");
+            throw new AuthenticationException("Credenciales inválidas");
         }
         
         if (!user.isEnabled()) {
-            throw new AuthenticationException("User account is disabled");
+            throw new AuthenticationException("La cuenta de usuario no está habilitada");
         }
         
-        return jwtTokenProvider.generateToken(user.getUsername(), user.getRoles());
+        return jwtTokenProvider.generateToken(user.getUsername());
     }
     
     @Override

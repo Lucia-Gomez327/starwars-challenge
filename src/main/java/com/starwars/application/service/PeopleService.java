@@ -45,14 +45,11 @@ public class PeopleService implements PeopleUseCase {
         List<People> peopleList = swapiResponse.getResults().stream()
                 .map(swapiMapper::toPeople)
                 .collect(Collectors.toList());
-        
-        // Construir Page de Spring desde la respuesta de SWAPI
+
         long totalElements = swapiResponse.getTotalRecords() != null ? swapiResponse.getTotalRecords() : 0;
-        int totalPages = swapiResponse.getTotalPages() != null ? swapiResponse.getTotalPages() : 0;
-        
+
         return new PageImpl<>(peopleList, pageable, totalElements);
     }
-
 
 
     @Override
@@ -77,7 +74,6 @@ public class PeopleService implements PeopleUseCase {
         log.debug("Searching people by name from SWAPI: {}", name);
         
         // SWAPI no tiene búsqueda por nombre directa, así que buscamos en todas las páginas
-        // Por eficiencia, solo buscamos en la primera página y filtramos
 
         int swapiPage = 1;
         int swapiLimit = 100; // Limite máximo para buscar
@@ -89,14 +85,14 @@ public class PeopleService implements PeopleUseCase {
             return new PageImpl<>(List.of(), pageable, 0);
         }
         
-        // Filtrar por nombre (búsqueda parcial case-insensitive)
+        // Filtrar por nombre
         String searchName = name.toLowerCase();
         List<People> filteredPeople = swapiResponse.getResults().stream()
                 .map(swapiMapper::toPeople)
                 .filter(p -> p.getName() != null && p.getName().toLowerCase().contains(searchName))
                 .collect(Collectors.toList());
         
-        // Aplicar paginación manual a los resultados filtrados
+        // paginación manual
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), filteredPeople.size());
         

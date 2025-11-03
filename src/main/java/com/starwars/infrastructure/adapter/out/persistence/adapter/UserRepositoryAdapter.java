@@ -53,7 +53,6 @@ public class UserRepositoryAdapter implements UserRepository {
                 .username(entity.getUsername())
                 .password(entity.getPassword())
                 .email(entity.getEmail())
-                .roles(convertRolesFromString(entity.getRoles()))
                 .createdAt(entity.getCreatedAt())
                 .enabled(entity.isEnabled())
                 .build();
@@ -65,27 +64,10 @@ public class UserRepositoryAdapter implements UserRepository {
                 .username(domain.getUsername())
                 .password(domain.getPassword())
                 .email(domain.getEmail())
-                .roles(convertRolesToString(domain.getRoles()))
                 .createdAt(domain.getCreatedAt())
                 .enabled(domain.isEnabled())
                 .build();
     }
 
-    // Convertir String de roles → Set<String>
-    private Set<String> convertRolesFromString(String rolesString) {
-        if (rolesString == null || rolesString.isEmpty()) {
-            return Set.of("ROLE_USER");
-        }
-        return Arrays.stream(rolesString.split(","))
-                .map(String::trim)
-                .collect(Collectors.toSet());
-    }
 
-    // Convertir Set<String> de roles → String
-    private String convertRolesToString(Set<String> roles) {
-        if (roles == null || roles.isEmpty()) {
-            return "ROLE_USER";
-        }
-        return String.join(",", roles);
-    }
 }

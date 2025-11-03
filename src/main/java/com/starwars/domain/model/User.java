@@ -17,7 +17,6 @@ public class User {
     private String username;
     private String password;
     private String email;
-    private Set<String> roles;
     private LocalDateTime createdAt;
     private boolean enabled;
 }

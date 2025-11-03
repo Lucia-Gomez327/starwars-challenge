@@ -1,5 +1,5 @@
 spring:
-  # Base de datos H2 en memoria para tests (más rápido que PostgreSQL)
+  # Base de datos H2 en memoria para tests
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
@@ -15,7 +15,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop  # Crea y borra tablas en cada test
-    show-sql: false  # No mostrar SQL en tests (puedes ponerlo en true para debug)
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -30,7 +30,7 @@ jwt:
 swapi:
   base-url: https://www.swapi.tech/api
 
-# Logging solo WARN y ERROR en tests (más limpio)
+# Logging solo WARN y ERROR en tests
 logging:
   level:
     root: WARN

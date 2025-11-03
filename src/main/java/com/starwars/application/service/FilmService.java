@@ -49,12 +49,6 @@ public class FilmService implements FilmUseCase {
     }
     
     @Override
-    public Optional<Film> findById(Long id) {
-        log.debug("Finding film by id from SWAPI: {}", id);
-        return findByUid(String.valueOf(id));
-    }
-    
-    @Override
     public Optional<Film> findByUid(String uid) {
         log.debug("Finding film by uid from SWAPI: {}", uid);
         
@@ -102,12 +96,7 @@ public class FilmService implements FilmUseCase {
         
         return new PageImpl<>(paginatedFilms, pageable, filteredFilms.size());
     }
-    
-    @Override
-    public Film save(Film film) {
-        log.warn("Save operation not supported when using SWAPI directly. Films cannot be saved.");
-        throw new UnsupportedOperationException("Save operation not supported when using SWAPI as data source");
-    }
+
 }
 
 
