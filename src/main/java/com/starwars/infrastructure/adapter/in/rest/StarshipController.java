@@ -6,7 +6,6 @@ import com.starwars.application.mapper.StarshipMapper;
 import com.starwars.domain.exception.ResourceNotFoundException;
 import com.starwars.domain.model.Starship;
 import com.starwars.domain.port.in.StarshipUseCase;
-import com.starwars.domain.model.SwapiPageResponse;
 import com.starwars.domain.port.out.SwapiClient;
 import com.starwars.infrastructure.adapter.out.client.SwapiMapper;
 import com.starwars.infrastructure.adapter.out.client.dto.SwapiStarshipDTO;
@@ -35,86 +34,84 @@ public class StarshipController {
     private final SwapiClient swapiClient;
     private final SwapiMapper swapiMapper;
     
-    @Operation(summary = "Get all starships, with optional pagination and filters (id/name)")
+    @Operation(summary = "Get starships paginated (page is 1-based, starships supports pagination)")
     @GetMapping
-    public ResponseEntity<?> getAllStarships(
-            @RequestParam(required = false) String id,
-            @RequestParam(required = false) String name,
+    public ResponseEntity<PageResponse<StarshipResponse>> getAllStarships(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size) {
-        
+        int requestedPage = (page == null || page < 1) ? 1 : page;
+        int requestedSize = (size == null || size < 1) ? 10 : size;
+        Pageable pageable = PageRequest.of(requestedPage - 1, requestedSize);
+        Page<Starship> starshipPage = starshipUseCase.findAll(pageable);
+        return ResponseEntity.ok(PageResponse.<StarshipResponse>builder()
+                .content(starshipPage.getContent().stream()
+                        .map(starshipMapper::toResponse)
+                        .toList())
+                .pageNumber(requestedPage)
+                .pageSize(starshipPage.getSize())
+                .totalElements(starshipPage.getTotalElements())
+                .totalPages(starshipPage.getTotalPages())
+                .last(starshipPage.isLast())
+                .first(starshipPage.isFirst())
+                .build());
+    }
+
+    @Operation(summary = "Search starships by id and/or name or model (not both name and model at the same time, page is 1-based)")
+    @GetMapping("/search")
+    public ResponseEntity<?> searchStarships(
+            @RequestParam(required = false) String id,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String model,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
         // Si hay ID, devolver solo ese registro
         if (id != null && !id.isEmpty()) {
             Starship starship = starshipUseCase.findByUid(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Starship", id));
             return ResponseEntity.ok(starshipMapper.toResponse(starship));
         }
+
+        // Validar que no se use name y model a la vez
+        boolean hasName = name != null && !name.isEmpty();
+        boolean hasModel = model != null && !model.isEmpty();
         
+        if (hasName && hasModel) {
+            return ResponseEntity.badRequest().body("No se puede buscar por 'name' y 'model' al mismo tiempo. Use solo uno.");
+        }
+
         // Si hay nombre, buscar por nombre
-        if (name != null && !name.isEmpty()) {
-            Pageable pageable = (page != null && size != null) 
-                    ? PageRequest.of(page, size) 
-                    : null;
-            return ResponseEntity.ok(searchByName(name, pageable));
+        if (hasName) {
+            Pageable pageable = null;
+            Integer requestedPage = null;
+            if (page != null && size != null) {
+                requestedPage = page;
+                int adjusted = Math.max(0, page - 1);
+                pageable = PageRequest.of(adjusted, size);
+            }
+            return ResponseEntity.ok(searchByName(name, pageable, requestedPage));
         }
-        
-        // Si hay paginación, devolver paginado
-        if (page != null && size != null) {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<Starship> starshipPage = starshipUseCase.findAll(pageable);
-            return ResponseEntity.ok(PageResponse.<StarshipResponse>builder()
-                    .content(starshipPage.getContent().stream()
-                            .map(starshipMapper::toResponse)
-                            .toList())
-                    .pageNumber(starshipPage.getNumber())
-                    .pageSize(starshipPage.getSize())
-                    .totalElements(starshipPage.getTotalElements())
-                    .totalPages(starshipPage.getTotalPages())
-                    .last(starshipPage.isLast())
-                    .first(starshipPage.isFirst())
-                    .build());
+
+        // Si hay model, buscar por model
+        if (hasModel) {
+            Pageable pageable = null;
+            Integer requestedPage = null;
+            if (page != null && size != null) {
+                requestedPage = page;
+                int adjusted = Math.max(0, page - 1);
+                pageable = PageRequest.of(adjusted, size);
+            }
+            return ResponseEntity.ok(searchByModel(model, pageable, requestedPage));
         }
-        
-        // Sin parámetros, devolver todo
-        return ResponseEntity.ok(getAll());
+
+        // Si no hay filtros, devolver 400
+        return ResponseEntity.badRequest().body("Debe especificar 'id', 'name' o 'model'.");
     }
     
-    private List<StarshipResponse> getAll() {
-        List<StarshipResponse> allStarships = new java.util.ArrayList<>();
-        int currentPage = 1;
-        int limit = 100;
-        
-        while (true) {
-            SwapiPageResponse<SwapiStarshipDTO> swapiResponse = 
-                    swapiClient.fetchPage("starships", currentPage, limit, SwapiStarshipDTO.class);
-            
-            if (swapiResponse == null || swapiResponse.getResults() == null || swapiResponse.getResults().isEmpty()) {
-                break;
-            }
-            
-            List<StarshipResponse> starshipPage = swapiResponse.getResults().stream()
-                    .map(swapiMapper::toStarship)
-                    .map(starshipMapper::toResponse)
-                    .collect(Collectors.toList());
-            
-            allStarships.addAll(starshipPage);
-            
-            if (swapiResponse.getNext() == null || swapiResponse.getNext().isEmpty()) {
-                break;
-            }
-            
-            currentPage++;
-        }
-        
-        return allStarships;
-    }
-    
-    private PageResponse<StarshipResponse> searchByName(String name, Pageable pageable) {
-        List<StarshipResponse> allStarships = getAll();
-        
-        String searchName = name.toLowerCase();
-        List<StarshipResponse> filteredStarships = allStarships.stream()
-                .filter(s -> s.getName() != null && s.getName().toLowerCase().contains(searchName))
+    private PageResponse<StarshipResponse> searchByName(String name, Pageable pageable, Integer requestedPage) {
+        List<SwapiStarshipDTO> swapiResults = swapiClient.fetchByName("starships", name, SwapiStarshipDTO.class);
+        List<StarshipResponse> filteredStarships = swapiResults.stream()
+                .map(swapiMapper::toStarship)
+                .map(starshipMapper::toResponse)
                 .collect(Collectors.toList());
         
         if (pageable == null) {
@@ -125,12 +122,12 @@ public class StarshipController {
         }
         
         int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), filteredStarships.size());
+        int end = Math.min(start + pageable.getPageSize(), filteredStarships.size());
         
-        if (start > filteredStarships.size()) {
+        if (start >= filteredStarships.size()) {
             return PageResponse.<StarshipResponse>builder()
                     .content(List.of())
-                    .pageNumber(pageable.getPageNumber())
+                    .pageNumber(requestedPage != null ? requestedPage : (pageable.getPageNumber() + 1))
                     .pageSize(pageable.getPageSize())
                     .totalElements(filteredStarships.size())
                     .build();
@@ -140,7 +137,46 @@ public class StarshipController {
         
         return PageResponse.<StarshipResponse>builder()
                 .content(paginatedStarships)
-                .pageNumber(pageable.getPageNumber())
+                .pageNumber(requestedPage != null ? requestedPage : (pageable.getPageNumber() + 1))
+                .pageSize(pageable.getPageSize())
+                .totalElements(filteredStarships.size())
+                .totalPages((int) Math.ceil((double) filteredStarships.size() / pageable.getPageSize()))
+                .last(end >= filteredStarships.size())
+                .first(start == 0)
+                .build();
+    }
+
+    private PageResponse<StarshipResponse> searchByModel(String model, Pageable pageable, Integer requestedPage) {
+        List<SwapiStarshipDTO> swapiResults = swapiClient.fetchByModel("starships", model, SwapiStarshipDTO.class);
+        List<StarshipResponse> filteredStarships = swapiResults.stream()
+                .map(swapiMapper::toStarship)
+                .map(starshipMapper::toResponse)
+                .collect(Collectors.toList());
+        
+        if (pageable == null) {
+            return PageResponse.<StarshipResponse>builder()
+                    .content(filteredStarships)
+                    .totalElements(filteredStarships.size())
+                    .build();
+        }
+        
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), filteredStarships.size());
+        
+        if (start >= filteredStarships.size()) {
+            return PageResponse.<StarshipResponse>builder()
+                    .content(List.of())
+                    .pageNumber(requestedPage != null ? requestedPage : (pageable.getPageNumber() + 1))
+                    .pageSize(pageable.getPageSize())
+                    .totalElements(filteredStarships.size())
+                    .build();
+        }
+        
+        List<StarshipResponse> paginatedStarships = filteredStarships.subList(start, end);
+        
+        return PageResponse.<StarshipResponse>builder()
+                .content(paginatedStarships)
+                .pageNumber(requestedPage != null ? requestedPage : (pageable.getPageNumber() + 1))
                 .pageSize(pageable.getPageSize())
                 .totalElements(filteredStarships.size())
                 .totalPages((int) Math.ceil((double) filteredStarships.size() / pageable.getPageSize()))

@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -210,6 +211,59 @@ public class SwapiClientImpl implements SwapiClient {
             return results;
         } catch (Exception e) {
             log.error("Error fetching from SWAPI endpoint: {} with name: {}", endpoint, name, e);
+            return new ArrayList<>();
+        }
+    }
+    
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> List<T> fetchByModel(String endpoint, String model, Class<T> type) {
+        String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "/" + endpoint)
+                .queryParam("model", model)
+                .toUriString();
+        
+        try {
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            
+            if (response == null) {
+                log.error("Null response from SWAPI for endpoint: {} with model: {}", endpoint, model);
+                return new ArrayList<>();
+            }
+            
+            List<T> results = new ArrayList<>();
+            
+            // Cuando se usa ?model=, SWAPI devuelve "result" (array) en lugar de "results"
+            if (response.containsKey("result")) {
+                List<Map<String, Object>> resultList = (List<Map<String, Object>>) response.get("result");
+                for (Map<String, Object> resultMap : resultList) {
+                    // SWAPI devuelve los datos dentro de "properties", similar a fetchById
+                    if (resultMap != null && resultMap.containsKey("properties")) {
+                        Map<String, Object> properties = (Map<String, Object>) resultMap.get("properties");
+                        // Agregar el uid del result
+                        if (resultMap.containsKey("uid")) {
+                            properties.put("uid", resultMap.get("uid"));
+                        }
+                        if (resultMap.containsKey("_id")) {
+                            properties.put("_id", resultMap.get("_id"));
+                        }
+                        T item = convertMapToObject(properties, type);
+                        if (item != null) {
+                            results.add(item);
+                        }
+                    } else {
+                        // Si no hay properties, intentar usar result directamente
+                        T item = convertMapToObject(resultMap, type);
+                        if (item != null) {
+                            results.add(item);
+                        }
+                    }
+                }
+            }
+            
+            log.debug("Fetched {} items from SWAPI endpoint: {} with model: {}", results.size(), endpoint, model);
+            return results;
+        } catch (Exception e) {
+            log.error("Error fetching from SWAPI endpoint: {} with model: {}", endpoint, model, e);
             return new ArrayList<>();
         }
     }
