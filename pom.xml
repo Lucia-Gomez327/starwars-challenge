@@ -41,7 +41,7 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         
-        <!-- H2 Database (para desarrollo rápido sin Docker) -->
+        <!-- H2 Database -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>

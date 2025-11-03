@@ -2,7 +2,7 @@ spring:
   application:
     name: starwars-challenge
   profiles:
-    active: h2  # Cambiar a 'dev' cuando Docker funcione
+    active: h2
 
 springdoc:
   api-docs:
