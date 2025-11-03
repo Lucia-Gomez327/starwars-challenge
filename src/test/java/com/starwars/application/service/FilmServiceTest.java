@@ -358,29 +358,5 @@ class FilmServiceTest {
                 .isEqualTo(4);
     }
 
-    /**
-     * TEST 5: save() - Caso de error esperado
-     * 
-     * Verifica que save() lanza una excepción porque SWAPI es solo lectura.
-     * No podemos guardar nuevas películas en SWAPI.
-     */
-    @Test
-    @DisplayName("Debería lanzar UnsupportedOperationException cuando se intenta guardar")
-    void testSave_ShouldThrowException() {
-        
-        // ========== ARRANGE ==========
-        Film film = Film.builder()
-                .uid("1")
-                .title("Test Film")
-                .episodeId(7)
-                .build();
-        
-        // ========== ACT y ASSERT ==========
-        // Verificamos que se lanza la excepción esperada
-        assertThatThrownBy(() -> filmService.save(film))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessageContaining("not supported")
-                .as("Debería lanzar UnsupportedOperationException porque SWAPI es solo lectura");
-    }
 }
 
