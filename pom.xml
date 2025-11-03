@@ -48,12 +48,7 @@
             <scope>runtime</scope>
         </dependency>
         
-        <!-- PostgreSQL (para producción y cuando Docker funcione) -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
+
         
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
