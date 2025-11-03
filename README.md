@@ -188,7 +188,7 @@ mvn test -Dtest=*IntegrationTest
 
 ## 📦 Despliegue
 
-### Opción Recomendada: Railway
+###  Railway
 
 Railway es la opción más fácil para desplegar aplicaciones Spring Boot:
 
@@ -232,16 +232,8 @@ La aplicación tiene tres perfiles configurados:
 
 Para producción, configura estas variables:
 
-```bash
-JWT_SECRET=tu-secreto-super-seguro-de-al-menos-256-bits
-JWT_EXPIRATION=86400000
-SWAPI_BASE_URL=https://www.swapi.tech/api
 
-# Base de datos (PostgreSQL)
-SPRING_DATASOURCE_URL=jdbc:postgresql://host:5432/database
-SPRING_DATASOURCE_USERNAME=usuario
-SPRING_DATASOURCE_PASSWORD=contraseña
-```
+``
 
 ## 📝 Estado del Proyecto
 
@@ -296,6 +288,3 @@ curl -X GET http://localhost:8080/api/people?page=0&size=10 \
 
 Lucia Gomez - [@Lucia-Gomez327](https://github.com/Lucia-Gomez327)
 
-## 📄 Licencia
-
-MIT
