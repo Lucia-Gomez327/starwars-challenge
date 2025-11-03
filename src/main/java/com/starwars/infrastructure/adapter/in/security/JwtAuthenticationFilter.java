@@ -31,8 +31,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String path = request.getRequestURI();
         
-        // No procesar JWT para rutas de autenticación o peticiones OPTIONS (preflight de CORS)
+        // Para rutas de autenticación o peticiones OPTIONS (preflight de CORS)
         if (path.startsWith("/api/auth/") || "OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            // Limpiar el SecurityContext para que permitAll() funcione correctamente
+            SecurityContextHolder.clearContext();
             filterChain.doFilter(request, response);
             return;
         }
