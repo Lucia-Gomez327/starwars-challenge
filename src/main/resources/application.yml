@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: starwars-challenge
+  profiles:
+    active: h2  # Cambiar a 'dev' cuando Docker funcione
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+

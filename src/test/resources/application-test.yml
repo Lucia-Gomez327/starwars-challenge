@@ -1,0 +1,39 @@
+spring:
+  # Base de datos H2 en memoria para tests (más rápido que PostgreSQL)
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  # Configuración de H2 console (deshabilitada en tests)
+  h2:
+    console:
+      enabled: false
+  
+  # JPA configuración para H2
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # Crea y borra tablas en cada test
+    show-sql: false  # No mostrar SQL en tests (puedes ponerlo en true para debug)
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+
+# JWT para tests (mismo secreto que desarrollo para que los tokens funcionen)
+jwt:
+  secret: mi-secreto-super-seguro-de-al-menos-256-bits-para-jwt-en-desarrollo
+  expiration: 86400000 # 24 horas en milisegundos
+
+# SWAPI URL (usamos la real en tests de integración)
+swapi:
+  base-url: https://www.swapi.tech/api
+
+# Logging solo WARN y ERROR en tests (más limpio)
+logging:
+  level:
+    root: WARN
+    com.starwars: INFO
+    org.springframework.security: WARN
+

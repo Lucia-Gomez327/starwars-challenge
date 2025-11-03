@@ -1,0 +1,34 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/starwars_db
+    username: starwars_user
+    password: starwars_pass
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  
+  security:
+    user:
+      name: admin
+      password: admin
+
+jwt:
+  secret: mi-secreto-super-seguro-de-al-menos-256-bits-para-jwt-en-desarrollo
+  expiration: 86400000 # 24 horas en milisegundos
+
+swapi:
+  base-url: https://www.swapi.tech/api
+
+logging:
+  level:
+    com.starwars: DEBUG
+    org.springframework.security: DEBUG
+
+
